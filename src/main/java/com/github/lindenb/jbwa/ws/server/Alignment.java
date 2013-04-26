@@ -21,7 +21,7 @@ implements java.io.Serializable
 		}
 	public String getReadName() { return this.name; }
 	public void setReadName(String name) { this.name=name; }
-	public String getReadBases() { return this.name; }
+	public String getReadBases() { return this.sequence; }
 	public void setReadBases(String sequence) { this.sequence=sequence; }
 	public String getChrom() { return this.chrom; }
 	public void setChrom(String chrom) { this.chrom=chrom; }

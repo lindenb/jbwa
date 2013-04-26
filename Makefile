@@ -25,10 +25,19 @@ all:test.cmdline
 
 test.ws: test.ws.server
 
-test.ws.server: compile
+#compile and publish a WebService
+test.ws.server: compile ${native.dir}/libbwajni.so
 	javac  -sourcepath ${JAVASRCDIR} -d ${JAVASRCDIR} ${JAVASRCDIR}/com/github/lindenb/jbwa/ws/server/BWAServiceImpl.java
-	wsgen -verbose -keep -d ${JAVASRCDIR} -cp ${JAVASRCDIR} com.github.lindenb.jbwa.ws.server.BWAServiceImpl
-	java -cp ${JAVASRCDIR} com.github.lindenb.jbwa.ws.server.BWAServiceImpl -R $(REF)
+	wsgen -keep -d ${JAVASRCDIR} -cp ${JAVASRCDIR} com.github.lindenb.jbwa.ws.server.BWAServiceImpl
+	$(JAVA)   -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} com.github.lindenb.jbwa.ws.server.BWAServiceImpl -R $(REF) -p 8081
+
+#create a client from the WSDL file of the server
+test.ws.client:
+	mkdir  -p tmp
+	wsimport -keep -d tmp -p com.github.lindenb.jbwa.ws.client "http://localhost:8081/?wsdl"
+	$(JAVAC) -d tmp -sourcepath tmp:${JAVASRCDIR} ${JAVASRCDIR}/com/github/lindenb/jbwa/ws/client/BWAServiceClient.java
+	gunzip -c $(FASTQ) | head -n 8 | java  -cp tmp  com.github.lindenb.jbwa.ws.client.BWAServiceClient | xmllint --format - 
+	rm -rf tmp
 
 test.cmdline:${native.dir}/libbwajni.so
 	echo "TEST BWA/JNI:"

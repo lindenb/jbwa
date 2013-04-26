@@ -36,7 +36,7 @@ public class BWAServiceImpl
 			{
 			throw new IllegalArgumentException("Bad input "+sequence);
 			}
-		ShortRead read=new ShortRead("Any",dna.getBytes(),dna.replaceAll("[ANTGC]","I").getBytes());
+		ShortRead read=new ShortRead(name,dna.getBytes(),dna.replaceAll("[ANTGC]","I").getBytes());
 		BwaMem mem=null;
 		try
 			{

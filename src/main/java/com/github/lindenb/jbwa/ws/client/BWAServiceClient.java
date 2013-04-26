@@ -5,14 +5,20 @@ import javax.xml.bind.*;
 import java.net.URL;
 import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
-import com.mkyong.ws.HelloWorld;
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.io.File;
 import javax.xml.stream.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BWAServiceClient
 	{
 	private static final Logger LOG=Logger.getLogger("bwaserviceclient");
-	private bwaService=null;
+	private BWAService bwaService=null;
 	private Marshaller marshaller;
 	private XMLStreamWriter writer;
 	public BWAServiceClient()
@@ -20,10 +26,10 @@ public class BWAServiceClient
 		
 		}
 	
-	private void run(BufferedReader in) throws IOException
+	private void run(BufferedReader in) throws java.lang.Exception
 		{
-		String name;
-		String seq;
+		String name=null;
+		String seq=null;
 		String line;
 		int nLine=0;
 		while((line=in.readLine())!=null)
@@ -31,20 +37,22 @@ public class BWAServiceClient
 			switch(nLine%4)
 				{
 				case 0: name=line.substring(1);break;
-				case 1: seq=line;
-					{
-					for(Onject o:bwaService.align(name,sequence))
+				case 1: {
+					seq=line;
+					for(Alignment o:bwaService.align(name,seq))
 						{
-						marshaller.marshal(o,this.writer);
+						marshaller.marshal(new JAXBElement<Alignment>(new QName("Alignment"),Alignment.class,o),this.writer);
 						}
+					
 					break;
 					}
+				default:break;
 				}
 			nLine++;
 			}
 		}
 	
-	private void run(String[] args) throws Exception
+	private void run(String[] args) throws java.lang.Exception
 		{
 		int optind=0;
 		while(optind<args.length)
@@ -79,19 +87,21 @@ public class BWAServiceClient
 				}
 			++optind;
 			}
-		JAXBContext jaxbContext = JAXBContext.newInstance("comxxxxs");
+		this.bwaService=new BWAServiceImplService().getBWAServiceImplPort();
+		JAXBContext jaxbContext = JAXBContext.newInstance("com.github.lindenb.jbwa.ws.client");
 		this.marshaller = jaxbContext.createMarshaller();
 		this.marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+		this.marshaller.setProperty(Marshaller.JAXB_FRAGMENT, true);
 		
 		javax.xml.stream.XMLOutputFactory xmlfactory= javax.xml.stream.XMLOutputFactory.newInstance();
 		xmlfactory.setProperty(javax.xml.stream.XMLOutputFactory.IS_REPAIRING_NAMESPACES, Boolean.TRUE);
 		this.writer= xmlfactory.createXMLStreamWriter(System.out,"UTF-8");
 		this.writer.writeStartDocument("UTF-8","1.0");
-		this.writer.writeStartElement("bwa-service",NS);
-		this.writer.writeAttribute("reference,",service.getReference());
+		this.writer.writeStartElement("bwa-service");
+		this.writer.writeAttribute("reference", this.bwaService.getReferenceName());
 		if(optind==args.length)
 			{
-			this.run(new BufferedReader(new InputStreamReader(System.in));
+			this.run(new BufferedReader(new InputStreamReader(System.in)));
 			}
 		else while(optind < args.length)
         		   {
@@ -105,20 +115,19 @@ public class BWAServiceClient
 			        	in=new GZIPInputStream(in);
 			   	     	}
 			   
-			      	this.run(in);
+			      	this.run(new BufferedReader(new InputStreamReader(in)));
 			        in.close();
         		   }
-
         
 
-		w.writeEndElement();
-		w.writeEndDocument();
-		w.flush();
-		w.close();
+		this.writer.writeEndElement();
+		this.writer.writeEndDocument();
+		this.writer.flush();
+		this.writer.close();
 		LOG.info("done");
 		}
 	
-	public static void main(String[] args) throws Exception
+	public static void main(String[] args) throws java.lang.Exception
 		{
 		new BWAServiceClient().run(args);
 		}
