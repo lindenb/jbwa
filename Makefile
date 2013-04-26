@@ -19,10 +19,16 @@ REF?=human_g1k_v37.fasta
 FASTQ?=file.fastq.gz
 
 CC=gcc
-.PHONY:all compile test.cmdline test.gui clean
+.PHONY:all compile test.cmdline test.gui test.ws test.ws.client test.ws.server clean 
 
 all:test.cmdline
 
+test.ws: test.ws.server
+
+test.ws.server: compile
+	javac  -sourcepath ${JAVASRCDIR} -d ${JAVASRCDIR} ${JAVASRCDIR}/com/github/lindenb/jbwa/ws/server/BWAServiceImpl.java
+	wsgen -verbose -keep -d ${JAVASRCDIR} -cp ${JAVASRCDIR} com.github.lindenb.jbwa.ws.server.BWAServiceImpl
+	java -cp ${JAVASRCDIR} com.github.lindenb.jbwa.ws.server.BWAServiceImpl -R $(REF)
 
 test.cmdline:${native.dir}/libbwajni.so
 	echo "TEST BWA/JNI:"
