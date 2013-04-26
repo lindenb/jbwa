@@ -7,8 +7,8 @@ Author: Pierre Lindenbaum PhD. @yokofakun
 
 Motivation
 ----------
-[BWA 7.4][http://bio-bwa.sourceforge.net/] contains a small C [example][https://github.com/lh3/bwa/blob/master/example.c] for running *bwa-mem* as a library (bwamem-lite).
-I created some JNI bindings to see if I can bind the C bwa library to java and get the sam output that bwamem-lite.
+BWA 7.4(http://bio-bwa.sourceforge.net/) contains a small C example(https://github.com/lh3/bwa/blob/master/example.c) for running *bwa-mem* as a library (bwamem-lite).
+I created some JNI bindings to see if I can bind the C bwa library to java and get the same output than bwamem-lite.
 
 
 Example
@@ -78,7 +78,7 @@ HWI-1KL149:20:C1CU7ACXX:4:1101:17355:33322      +       6       126077895       
 
 GUI
 ---
-As a test I also create a Swing-Based interface for BWA:
+As a test I also created a swing-Based interface for BWA:
 ```bash
 java  -Djava.library.path=src/main/native  -cp src/main/java \
 	com.github.lindenb.jbwa.jni.BwaFrame human_g1k_v37.fasta
