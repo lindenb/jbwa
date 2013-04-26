@@ -1,0 +1,7 @@
+*.o
+*.a
+*.so
+*~
+*.class
+src/main/native/bwajni.h
+make.properties
