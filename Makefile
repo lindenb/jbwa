@@ -25,27 +25,32 @@ all:test.cmdline
 
 
 test.cmdline:${native.dir}/libbwajni.so
-	@echo "TEST BWA/JNI:"
-	@gunzip -c $(FASTQ) | head -n 4000 | java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example $(REF) -| tail 
-	@echo "TEST BWA/NATIVE:"
-	@gunzip -c $(FASTQ) | head -n 4000 | $(BWA.dir)/bwamem-lite $(REF) - | tail 
+	echo "TEST BWA/JNI:"
+	gunzip -c $(FASTQ) | head -n 4000 | java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example $(REF) -| tail 
+	echo "TEST BWA/NATIVE:"
+	gunzip -c $(FASTQ) | head -n 4000 | $(BWA.dir)/bwamem-lite $(REF) - | tail 
 
 test.gui:${native.dir}/libbwajni.so
 	$(JAVA)  -Djava.library.path=${native.dir}  -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.BwaFrame $(REF)
-	
+
+#create a shared dynamic library for BWA
 ${native.dir}/libbwajni.so : ${native.dir}/bwajni.o ${native.dir}/libbwa2.a
 	$(CC) -shared -o $@ $<  -L ${native.dir} -lbwa2 -lm -lz -lpthread
 
+#compile the JNI bindings
 ${native.dir}/bwajni.o: ${native.dir}/bwajni.c ${native.dir}/bwajni.h
 	$(CC) -c $(CFLAGS) -o $@ $(CFLAGS) -fPIC  -I/java/include -I/java/include/solaris  -I $(BWA.dir) $<
 
+#libbwa must be recompiled with fPIC to create a dynamic library.
 ${native.dir}/libbwa2.a:  $(foreach C,${BWAOBJS}, ${BWA.dir}/$(patsubst %.o,%.c,${C}) )
 	 $(foreach C,${BWAOBJS}, $(CC) -o ${native.dir}/${C} $(CFLAGS) -c -fPIC -I $(BWA.dir) ${BWA.dir}/$(patsubst %.o,%.c,${C});)
 	 ar  rcs $@  $(foreach C,${BWAOBJS}, ${native.dir}/${C} )
 
+#create JNI header
 ${native.dir}/bwajni.h : compile
 	$(JAVAH) -o $@ -jni -classpath ${JAVASRCDIR} $(JAVAQUALNAME)
-
+	
+#compile java classes
 compile: $(JAVACLASSSRC)
 	$(JAVAC) -sourcepath ${JAVASRCDIR} -d ${JAVASRCDIR} $^
 
