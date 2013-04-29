@@ -25,7 +25,7 @@ public class ShortRead
 		
 	public byte[] getQualities()
 		{
-		return this.seq;
+		return this.qual;
 		}
 	
 	@Override

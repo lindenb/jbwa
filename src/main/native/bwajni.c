@@ -8,9 +8,12 @@ KSEQ_DECLARE(gzFile)
 #define QUALIFIEDMETHOD(fun) Java_com_github_lindenb_jbwa_jni_##fun
 #define PACKAGEPATH "com/github/lindenb/jbwa/jni/"
 
-#define REFPTR(self)  
-#define VERIFY_NOT_NULL2(a,F,L) if((a)==0) throwIOException(env,"Method returned Null at " F ":"  #L)
-#define VERIFY_NOT_NULL(a)  VERIFY_NOT_NULL2(a,__FILE__,_LINE__)
+
+
+
+#define WHERE fprintf(stderr,"[%s][%d]\n",__FILE__,__LINE__)
+
+#define VERIFY_NOT_NULL(a) if((a)==0) do {fprintf(stderr,"Throwing error from %s %d\n",__FILE__,__LINE__); throwIOException(env,"Method returned Null");} while(0)
 
 #define CAST_REF_OBJECT(retType,method,ref) \
 static retType _get##method(JNIEnv * env, jobject self)\
@@ -154,6 +157,132 @@ JNIEXPORT jobjectArray JNICALL QUALIFIEDMETHOD(BwaMem_align)(JNIEnv *env, jobjec
   	free(ar.a);
   	return returnedArray;
 	}
+
+
+
+/*
+ * Class:     com_github_lindenb_jbwa_jni_BwaMem
+ * Method:    align2
+ * Signature: ([Lcom/github/lindenb/jbwa/jni/ShortRead;[Lcom/github/lindenb/jbwa/jni/ShortRead;)I
+ */
+JNIEXPORT jobjectArray JNICALL QUALIFIEDMETHOD(BwaMem_align2)(
+	JNIEnv *env,
+	 jobject self,
+	 jobject bwaIndex,
+	 jobjectArray ks1,
+	 jobjectArray ks2
+	 )
+  	{
+  	bseq1_t *seqs=NULL;
+  	int i;
+  	int numPairs=0;
+  	jclass shortReadClass;
+  	jmethodID shortReadGetName;
+  	jmethodID shortReadBases;
+  	jmethodID shortReadQualities;  
+  	jobjectArray samRetArray=NULL;
+  	mem_opt_t* opt= _getBwaMem(env,self);
+	bwaidx_t* idx= _getBwaIndex(env,bwaIndex);	
+	
+  	opt->flag |= MEM_F_PE;//PROBLEM FOR SHARED LIB HERE
+  	if(ks1==NULL) return NULL;
+  	if(ks2==NULL) return NULL;
+  	
+  	
+  	if((numPairs=(*env)->GetArrayLength(env,ks1))!=(*env)->GetArrayLength(env,ks2)) return NULL;
+  	
+  	seqs=calloc(numPairs*2,sizeof(bseq1_t));
+  	if(seqs==NULL) return NULL;
+  	
+  	VERIFY_NOT_NULL(shortReadClass = (*env)->FindClass(env, PACKAGEPATH "ShortRead"));
+  	VERIFY_NOT_NULL(shortReadGetName = (*env)->GetMethodID(env,shortReadClass,"getName", "()Ljava/lang/String;"));
+  	VERIFY_NOT_NULL(shortReadBases = (*env)->GetMethodID(env,shortReadClass,"getBases", "()[B"));
+  	VERIFY_NOT_NULL(shortReadQualities = (*env)->GetMethodID(env,shortReadClass,"getQualities", "()[B"));
+  	  	  	
+  	for( i = 0; i < numPairs; i++)
+		{
+		int side=0;
+		for(side=0;side<2;++side)
+			{
+			
+			jbyteArray arrayOfBytes=NULL;
+			jbyte* data;
+			jsize length;
+			jobject readName;
+			bseq1_t* curr_bseq1=&seqs[i*2+side];
+			
+			jobject readObj = (*env)->GetObjectArrayElement(env,(side==0?ks1:ks2), i);
+			
+			//SAM 
+			curr_bseq1->sam=NULL;
+
+			//COMMENT 
+			curr_bseq1->comment=strdup("");
+
+			
+			//NAME
+			readName=(jbyteArray) (*env)->CallObjectMethod(env,readObj, shortReadGetName);
+			VERIFY_NOT_NULL(readName);
+			const char* str = (*env)->GetStringUTFChars(env,(jstring) readName, NULL);
+			VERIFY_NOT_NULL(str);
+			curr_bseq1->name=strdup(str);
+			VERIFY_NOT_NULL(curr_bseq1->name);
+			  (*env)->ReleaseStringUTFChars(env,readName, str);
+			
+
+			
+			//SEQUENCE
+			arrayOfBytes=(jbyteArray) (*env)->CallObjectMethod(env,readObj, shortReadBases);
+			VERIFY_NOT_NULL(arrayOfBytes);
+			data = (*env)->GetByteArrayElements(env,arrayOfBytes, NULL);
+			VERIFY_NOT_NULL(data);
+  			curr_bseq1->l_seq = (*env)->GetArrayLength(env,arrayOfBytes);
+			curr_bseq1->seq=strndup((const char*)data,curr_bseq1->l_seq );
+
+			
+			VERIFY_NOT_NULL(curr_bseq1->seq);
+			(*env)->ReleaseByteArrayElements(env,arrayOfBytes, data, 0);
+			
+
+			
+			//QUALITIES
+			arrayOfBytes=(jbyteArray) (*env)->CallObjectMethod(env,readObj, shortReadQualities);
+			VERIFY_NOT_NULL(arrayOfBytes);
+			data = (*env)->GetByteArrayElements(env,arrayOfBytes, NULL);
+			VERIFY_NOT_NULL(data);
+  			length = (*env)->GetArrayLength(env,arrayOfBytes);
+			curr_bseq1->qual=strndup( (const char*)data,length);
+			VERIFY_NOT_NULL(curr_bseq1->qual);
+			(*env)->ReleaseByteArrayElements(env,arrayOfBytes, data, 0);
+			
+
+			}
+		}
+	
+	mem_process_seqs(opt, idx->bwt, idx->bns, idx->pac, numPairs*2, seqs, 0);
+	
+	samRetArray = (jobjectArray)(*env)->NewObjectArray(env, (numPairs*2 ),  
+         	(*env)->FindClass(env,"java/lang/String"),  
+         	NULL
+         	);
+	VERIFY_NOT_NULL(samRetArray);
+	
+	for (i = 0; i <  (numPairs*2 ); ++i)
+		{
+		(*env)->SetObjectArrayElement(env,  
+			samRetArray,i,
+			(*env)->NewStringUTF(env,seqs[i].sam));  
+		//fputs(seqs[i].sam, stderr);
+		free(seqs[i].name);
+		free(seqs[i].comment);
+		free(seqs[i].seq);
+		free(seqs[i].qual);
+		free(seqs[i].sam);
+		}
+	free(seqs);
+	return samRetArray;
+  	}
+
 /***************************************************************************************************/
 /***************************************************************************************************/
 /***************************************************************************************************/

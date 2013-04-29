@@ -6,7 +6,7 @@ JAVAH ?= javah
 CFLAGS=-O3 -Wall  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
 BWAJNIQUALPACKAGE=com.github.lindenb.jbwa.jni
 JAVASRCDIR=src/main/java
-JAVACLASSNAME= Example BwaIndex BwaMem KSeq ShortRead AlnRgn BwaFrame
+JAVACLASSNAME= Example Example2 BwaIndex BwaMem KSeq ShortRead AlnRgn BwaFrame
 JAVACLASSSRC=$(addprefix src/main/java/com/github/lindenb/jbwa/jni/,$(addsuffix .java,$(JAVACLASSNAME)))
 JAVAQUALNAME=$(addprefix ${BWAJNIQUALPACKAGE}.,$(JAVACLASSNAME))
 BWAOBJS= utils.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o
@@ -19,9 +19,9 @@ REF?=human_g1k_v37.fasta
 FASTQ?=file.fastq.gz
 
 CC=gcc
-.PHONY:all compile test.cmdline test.gui test.ws test.ws.client test.ws.server clean 
+.PHONY:all compile test.cmdline.simple test.cmdline.double test.gui test.ws test.ws.client test.ws.server clean 
 
-all:test.cmdline
+all:test.cmdline.double
 
 test.ws: test.ws.server
 
@@ -39,11 +39,20 @@ test.ws.client:
 	gunzip -c $(FASTQ) | head -n 8 | java  -cp tmp  com.github.lindenb.jbwa.ws.client.BWAServiceClient | xmllint --format - 
 	rm -rf tmp
 
-test.cmdline:${native.dir}/libbwajni.so
+test.cmdline.simple :${native.dir}/libbwajni.so
 	echo "TEST BWA/JNI:"
 	gunzip -c $(FASTQ) | head -n 4000 | java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example $(REF) -| tail 
 	echo "TEST BWA/NATIVE:"
-	gunzip -c $(FASTQ) | head -n 4000 | $(BWA.dir)/bwamem-lite $(REF) - | tail 
+	gunzip -c $(FASTQ) | head -n 4000 | $(BWA.dir)/bwamem-lite $(REF) -  | tail 
+
+test.cmdline.double :${native.dir}/libbwajni.so
+	gunzip -c $(FASTQ1) | head -n 40 > tmp1.fq
+	gunzip -c $(FASTQ2) | head -n 40 > tmp2.fq
+	echo "TEST BWA/JNI:"
+	java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example2 $(REF)  tmp1.fq  tmp2.fq
+	echo "TEST BWA/NATIVE:"
+	$(BWA.dir)/bwa mem $(REF) tmp1.fq tmp2.fq 2> /dev/null | grep -v -E '^@'
+	rm -f tmp1.fq tmp2.fq
 
 test.gui:${native.dir}/libbwajni.so
 	$(JAVA)  -Djava.library.path=${native.dir}  -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.BwaFrame $(REF)
