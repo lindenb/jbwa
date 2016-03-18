@@ -258,8 +258,17 @@ JNIEXPORT jobjectArray JNICALL QUALIFIEDMETHOD(BwaMem_align2)(
 
 			}
 		}
-	
-	mem_process_seqs(opt, idx->bwt, idx->bns, idx->pac, numPairs*2, seqs, 0);
+
+	mem_process_seqs(
+		opt, /*  mem_opt_t *  */
+		idx->bwt, /*  const bwt_t *bwt   */
+		idx->bns, /* const bntseq_t *bns   */
+		idx->pac,/*   const uint8_t *pac  */
+		0,/* n_processed */
+		numPairs*2,/*  n  */
+		seqs,/*  bseq1_t *seqs   */
+		0 /*  const mem_pestat_t *pes0  */
+		);
 	
 	samRetArray = (jobjectArray)(*env)->NewObjectArray(env, (numPairs*2 ),  
          	(*env)->FindClass(env,"java/lang/String"),  

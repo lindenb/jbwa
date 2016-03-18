@@ -1,4 +1,4 @@
-include make.properties
+SHELL=/bin/bash
 CC ?= gcc
 JAVA ?= java
 JAVAC ?= javac
@@ -9,16 +9,38 @@ JAVASRCDIR=src/main/java
 JAVACLASSNAME= Example Example2 BwaIndex BwaMem KSeq ShortRead AlnRgn BwaFrame
 JAVACLASSSRC=$(addprefix src/main/java/com/github/lindenb/jbwa/jni/,$(addsuffix .java,$(JAVACLASSNAME)))
 JAVAQUALNAME=$(addprefix ${BWAJNIQUALPACKAGE}.,$(JAVACLASSNAME))
-BWAOBJS= utils.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o
+BWAOBJS= utils.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o kthread.o bwamem_extra.o
+REF=test/ref.fa
+FASTQ1=test/R1.fq
+FASTQ2=test/R1.fq
+FASTQ=${FASTQ1}
+
+
+ifeq (${JAVA_HOME},)
+$(error $${JAVA_HOME} is not defined)
+endif
+
+## find path where to find include files
+JDK_JNI_INCLUDES?=$(addprefix -I,$(sort $(dir $(shell find ${JAVA_HOME}/include -type f -name "*.h"))))
+
+
+ifeq (${JDK_JNI_INCLUDES},)
+$(error Cannot find C header files under $${JAVA_HOME})
+endif
+
+
+# my C source code path
 native.dir=src/main/native
-#path to bwa directory
-BWA.dir?=bwa-0.7.4
+
+#bwa version
+BWA.version?=0.7.13
+
 #path to a Reference genome (testing)
 REF?=human_g1k_v37.fasta
 #path to a gzipped fastq file (testing)
 FASTQ?=file.fastq.gz
 
-CC=gcc
+CC?=gcc
 .PHONY:all compile test.cmdline.simple test.cmdline.double test.gui test.ws test.ws.client test.ws.server clean 
 
 all:test.cmdline.double
@@ -39,23 +61,24 @@ test.ws.client:
 	gunzip -c $(FASTQ) | head -n 8 | java  -cp tmp  com.github.lindenb.jbwa.ws.client.BWAServiceClient | xmllint --format - 
 	rm -rf tmp
 
-test.cmdline.simple :${native.dir}/libbwajni.so
+test.cmdline.simple :${native.dir}/libbwajni.so ${REF}.bwt
 	echo "TEST BWA/JNI:"
-	gunzip -c $(FASTQ) | head -n 4000 | java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example $(REF) -| tail 
+	(gunzip -c $(FASTQ) | cat ${FASTQ}) | java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example $(REF) -| tail 
 	echo "TEST BWA/NATIVE:"
-	gunzip -c $(FASTQ) | head -n 4000 | $(BWA.dir)/bwamem-lite $(REF) -  | tail 
+	(gunzip -c $(FASTQ) | cat ${FASTQ})| bwa-${BWA.version}/bwamem-lite ${REF} -  | tail 
 
-test.cmdline.double :${native.dir}/libbwajni.so
-	gunzip -c $(FASTQ1) | head -n 40 > tmp1.fq
-	gunzip -c $(FASTQ2) | head -n 40 > tmp2.fq
+test.cmdline.double :${native.dir}/libbwajni.so ${REF}.bwt
 	echo "TEST BWA/JNI:"
-	java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example2 $(REF)  tmp1.fq  tmp2.fq
+	java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example2 $(REF)  ${FASTQ1} ${FASTQ2}
 	echo "TEST BWA/NATIVE:"
-	$(BWA.dir)/bwa mem $(REF) tmp1.fq tmp2.fq 2> /dev/null | grep -v -E '^@'
-	rm -f tmp1.fq tmp2.fq
+	bwa-${BWA.version}/bwa mem $(REF) ${FASTQ1} ${FASTQ2} 2> /dev/null | grep -v -E '^@'
 
 test.gui:${native.dir}/libbwajni.so
 	$(JAVA)  -Djava.library.path=${native.dir}  -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.BwaFrame $(REF)
+
+
+${REF}.bwt: ${REF} bwa-${BWA.version}/libbwa.a
+	bwa-${BWA.version}/bwa index $<
 
 #create a shared dynamic library for BWA
 ${native.dir}/libbwajni.so : ${native.dir}/bwajni.o ${native.dir}/libbwa2.a
@@ -63,11 +86,11 @@ ${native.dir}/libbwajni.so : ${native.dir}/bwajni.o ${native.dir}/libbwa2.a
 
 #compile the JNI bindings
 ${native.dir}/bwajni.o: ${native.dir}/bwajni.c ${native.dir}/bwajni.h
-	$(CC) -c $(CFLAGS) -o $@ $(CFLAGS) -fPIC  -I/java/include -I/java/include/solaris  -I $(BWA.dir) $<
+	$(CC) -c $(CFLAGS) -o $@ $(CFLAGS) -fPIC  ${JDK_JNI_INCLUDES}  -I bwa-${BWA.version} $<
 
 #libbwa must be recompiled with fPIC to create a dynamic library.
-${native.dir}/libbwa2.a:  $(foreach C,${BWAOBJS}, ${BWA.dir}/$(patsubst %.o,%.c,${C}) )
-	 $(foreach C,${BWAOBJS}, $(CC) -o ${native.dir}/${C} $(CFLAGS) -c -fPIC -I $(BWA.dir) ${BWA.dir}/$(patsubst %.o,%.c,${C});)
+${native.dir}/libbwa2.a:  $(foreach C,${BWAOBJS}, bwa-${BWA.version}/$(patsubst %.o,%.c,${C}) )
+	 $(foreach C,${BWAOBJS}, $(CC) -o ${native.dir}/${C} $(CFLAGS) -c -fPIC -I bwa-${BWA.version} bwa-${BWA.version}/$(patsubst %.o,%.c,${C});)
 	 ar  rcs $@  $(foreach C,${BWAOBJS}, ${native.dir}/${C} )
 
 #create JNI header
@@ -78,6 +101,11 @@ ${native.dir}/bwajni.h : compile
 compile: $(JAVACLASSSRC)
 	$(JAVAC) -sourcepath ${JAVASRCDIR} -d ${JAVASRCDIR} $^
 
+bwa-${BWA.version}/libbwa.a :
+	rm -rf "v${BWA.version}.zip" "bwa-${BWA.version}"
+	wget -O "v${BWA.version}.zip"  "https://github.com/lh3/bwa/archive/v${BWA.version}.zip"
+	unzip -o "v${BWA.version}.zip" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "v${BWA.version}.zip"
+
 clean:
-	rm -f ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.so
+	rm -rf ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.so bwa-${BWA.version}
 	find ${JAVASRCDIR} -name "*.class" -exec rm '{}' ';'
