@@ -3,12 +3,47 @@ jbwa
 
 Java Bindings (JNI) for bwa
 
-Author: Pierre Lindenbaum PhD. @yokofakun
+Author: 
+	Pierre Lindenbaum PhD. @yokofakun (Institut du Thorax, Nantes, France)
+	BWA is written by Heng Li  (Broad Institute)
 
 Motivation
 ----------
-BWA 7.4(http://bio-bwa.sourceforge.net/) contains a small C example(https://github.com/lh3/bwa/blob/master/example.c) for running *bwa-mem* as a library (bwamem-lite).
+BWA (http://bio-bwa.sourceforge.net/) contains a small C example(https://github.com/lh3/bwa/blob/master/example.c) for running *bwa-mem* as a library (bwamem-lite).
 I created some JNI bindings to see if I can bind the C bwa library to java and get the same output than bwamem-lite.
+
+Compilation
+-----------
+
+I've tested this code under linux and
+
+* JAVA oracle JDK8
+* GNU Make 3.81
+* gcc 4.8.2
+* wget
+
+BWA **0.7.13** will be downloaded.
+
+typing `make`, should download the sources bwa, compile and execute some tests.
+
+
+See also
+---------
+
+  * https://github.com/broadinstitute/gatk/issues/1517
+
+
+Contribute
+----------
+
+- Issue Tracker: http://github.com/lindenb/jbwa/issues
+- Source Code: http://github.com/lindenb/jbwa
+
+License
+-------
+
+The project is licensed under the MIT license.
+
 
 
 Example  (Two FASTQs)
