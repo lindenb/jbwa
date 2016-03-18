@@ -1,6 +1,8 @@
 jbwa
 ====
 
+[![Build Status](https://travis-ci.org/lindenb/jbwa.svg)](https://travis-ci.org/lindenb/jbwa)
+
 Java Bindings (JNI) for bwa
 
 Author: 

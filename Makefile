@@ -85,11 +85,11 @@ ${native.dir}/libbwajni.so : ${native.dir}/bwajni.o ${native.dir}/libbwa2.a
 	$(CC) -shared -o $@ $<  -L ${native.dir} -lbwa2 -lm -lz -lpthread
 
 #compile the JNI bindings
-${native.dir}/bwajni.o: ${native.dir}/bwajni.c ${native.dir}/bwajni.h
+${native.dir}/bwajni.o: ${native.dir}/bwajni.c ${native.dir}/bwajni.h bwa-${BWA.version}/libbwa.a
 	$(CC) -c $(CFLAGS) -o $@ $(CFLAGS) -fPIC  ${JDK_JNI_INCLUDES}  -I bwa-${BWA.version} $<
 
 #libbwa must be recompiled with fPIC to create a dynamic library.
-${native.dir}/libbwa2.a:  $(foreach C,${BWAOBJS}, bwa-${BWA.version}/$(patsubst %.o,%.c,${C}) )
+${native.dir}/libbwa2.a:  bwa-${BWA.version}/libbwa.a
 	 $(foreach C,${BWAOBJS}, $(CC) -o ${native.dir}/${C} $(CFLAGS) -c -fPIC -I bwa-${BWA.version} bwa-${BWA.version}/$(patsubst %.o,%.c,${C});)
 	 ar  rcs $@  $(foreach C,${BWAOBJS}, ${native.dir}/${C} )
 
@@ -108,4 +108,4 @@ bwa-${BWA.version}/libbwa.a :
 
 clean:
 	rm -rf ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.so bwa-${BWA.version}
-	find ${JAVASRCDIR} -name "*.class" -exec rm '{}' ';'
+	find ${JAVASRCDIR} -type f -name "*.class" -exec rm '{}' ';'
