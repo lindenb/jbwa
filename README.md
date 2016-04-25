@@ -24,7 +24,7 @@ I've tested this code under linux and
 * gcc 4.8.2
 * wget
 
-BWA **0.7.13** will be downloaded.
+BWA for apache2 will be downloaded ( https://github.com/lh3/bwa/tree/Apache2 ) .
 
 typing `make`, should download the sources bwa, compile and execute some tests.
 
