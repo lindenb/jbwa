@@ -44,7 +44,7 @@ Contribute
 License
 -------
 
-The project is licensed under the MIT license.
+The project is licensed under the Apache2 license.
 
 
 

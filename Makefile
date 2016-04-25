@@ -32,8 +32,8 @@ endif
 # my C source code path
 native.dir=src/main/native
 
-#bwa version
-BWA.version?=0.7.13
+#bwa version (apache2)
+BWA.version?=8e2da1e407972170d1a660286f07a3a3a71ee6fb
 
 #path to a Reference genome (testing)
 REF?=human_g1k_v37.fasta
@@ -102,10 +102,10 @@ compile: $(JAVACLASSSRC)
 	$(JAVAC) -sourcepath ${JAVASRCDIR} -d ${JAVASRCDIR} $^
 
 bwa-${BWA.version}/libbwa.a :
-	rm -rf "v${BWA.version}.zip" "bwa-${BWA.version}"
-	wget -O "v${BWA.version}.zip"  "https://github.com/lh3/bwa/archive/v${BWA.version}.zip"
-	unzip -o "v${BWA.version}.zip" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "v${BWA.version}.zip"
+	rm -rf "${BWA.version}.zip" "bwa-${BWA.version}"
+	wget -O "${BWA.version}.zip"  "https://github.com/lh3/bwa/archive/${BWA.version}.zip"
+	unzip -o "${BWA.version}.zip" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "${BWA.version}.zip"
 
 clean:
-	rm -rf ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.so bwa-${BWA.version}
+	rm -rf ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.so bwa-${BWA.version} "${BWA.version}.zip"
 	find ${JAVASRCDIR} -type f -name "*.class" -exec rm '{}' ';'
