@@ -9,6 +9,7 @@ JAVASRCDIR=src/main/java
 JAVACLASSNAME= Example Example2 BwaIndex BwaMem KSeq ShortRead AlnRgn BwaFrame
 JAVACLASSSRC=$(addprefix src/main/java/com/github/lindenb/jbwa/jni/,$(addsuffix .java,$(JAVACLASSNAME)))
 JAVAQUALNAME=$(addprefix ${BWAJNIQUALPACKAGE}.,$(JAVACLASSNAME))
+JAR=jbwa.jar
 BWAOBJS= utils.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o kthread.o bwamem_extra.o
 REF=test/ref.fa
 FASTQ1=test/R1.fq
@@ -41,9 +42,9 @@ REF?=human_g1k_v37.fasta
 FASTQ?=file.fastq.gz
 
 CC?=gcc
-.PHONY:all compile test.cmdline.simple test.cmdline.double test.gui test.ws test.ws.client test.ws.server clean 
+.PHONY:all compile jar test.cmdline.simple test.cmdline.double test.gui test.ws test.ws.client test.ws.server clean
 
-all:test.cmdline.double
+all:test.cmdline.double jar
 
 test.ws: test.ws.server
 
@@ -101,6 +102,10 @@ ${native.dir}/bwajni.h : compile
 compile: $(JAVACLASSSRC)
 	$(JAVAC) -sourcepath ${JAVASRCDIR} -d ${JAVASRCDIR} $^
 
+#create a JAR
+jar: ${JAVASRCDIR}
+	jar cvf ${JAR} -C ${JAVASRCDIR} .
+
 bwa-${BWA.version}/libbwa.a :
 	rm -rf "${BWA.version}.zip" "bwa-${BWA.version}"
 	wget -O "${BWA.version}.zip"  "https://github.com/lh3/bwa/archive/${BWA.version}.zip"
@@ -109,3 +114,4 @@ bwa-${BWA.version}/libbwa.a :
 clean:
 	rm -rf ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.so bwa-${BWA.version} "${BWA.version}.zip"
 	find ${JAVASRCDIR} -type f -name "*.class" -exec rm '{}' ';'
+	rm ${JAR}
