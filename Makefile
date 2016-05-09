@@ -13,7 +13,7 @@ JAR=jbwa.jar
 BWAOBJS= utils.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o kthread.o bwamem_extra.o
 REF=test/ref.fa
 FASTQ1=test/R1.fq
-FASTQ2=test/R1.fq
+FASTQ2=test/R2.fq
 FASTQ=${FASTQ1}
 
 
