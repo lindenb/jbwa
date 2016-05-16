@@ -10,6 +10,7 @@ JAVACLASSNAME= Example Example2 BwaIndex BwaMem KSeq ShortRead AlnRgn BwaFrame
 JAVACLASSSRC=$(addprefix src/main/java/com/github/lindenb/jbwa/jni/,$(addsuffix .java,$(JAVACLASSNAME)))
 JAVAQUALNAME=$(addprefix ${BWAJNIQUALPACKAGE}.,$(JAVACLASSNAME))
 JAR=jbwa.jar
+NATIVETARFILE=jbwa-native.tar
 BWAOBJS= utils.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o kthread.o bwamem_extra.o
 REF=test/ref.fa
 FASTQ1=test/R1.fq
@@ -42,9 +43,9 @@ REF?=human_g1k_v37.fasta
 FASTQ?=file.fastq.gz
 
 CC?=gcc
-.PHONY:all compile jar test.cmdline.simple test.cmdline.double test.gui test.ws test.ws.client test.ws.server clean
+.PHONY:all compile jar tar test.cmdline.simple test.cmdline.double test.gui test.ws test .ws.client test.ws.server clean
 
-all:test.cmdline.double jar
+all:test.cmdline.double jar tar
 
 test.ws: test.ws.server
 
@@ -105,6 +106,10 @@ compile: $(JAVACLASSSRC)
 #create a JAR
 jar: ${JAVASRCDIR}
 	jar cvf ${JAR} -C ${JAVASRCDIR} .
+
+#create a tar of the native libraries
+tar: ${native.dir}
+	tar cf ${NATIVETARFILE} -C ${native.dir} .
 
 bwa-${BWA.version}/libbwa.a :
 	rm -rf "${BWA.version}.zip" "bwa-${BWA.version}"
