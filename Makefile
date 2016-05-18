@@ -16,6 +16,8 @@ REF=test/ref.fa
 FASTQ1=test/R1.fq
 FASTQ2=test/R2.fq
 FASTQ=${FASTQ1}
+OSNAME=$(shell uname)
+
 
 
 ifeq (${JAVA_HOME},)
@@ -34,6 +36,13 @@ endif
 # my C source code path
 native.dir=src/main/native
 
+## see https://github.com/lindenb/jbwa/pull/5
+ifeq (${OSNAME},Darwin)
+native.extension=jnilib
+else
+native.extension=so
+endif
+
 #bwa version (apache2)
 BWA.version?=8e2da1e407972170d1a660286f07a3a3a71ee6fb
 
@@ -50,7 +59,7 @@ all:test.cmdline.double jar tar
 test.ws: test.ws.server
 
 #compile and publish a WebService
-test.ws.server: compile ${native.dir}/libbwajni.so
+test.ws.server: compile ${native.dir}/libbwajni.${native.extension}
 	javac  -sourcepath ${JAVASRCDIR} -d ${JAVASRCDIR} ${JAVASRCDIR}/com/github/lindenb/jbwa/ws/server/BWAServiceImpl.java
 	wsgen -keep -d ${JAVASRCDIR} -cp ${JAVASRCDIR} com.github.lindenb.jbwa.ws.server.BWAServiceImpl
 	$(JAVA)   -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} com.github.lindenb.jbwa.ws.server.BWAServiceImpl -R $(REF) -p 8081
@@ -63,19 +72,19 @@ test.ws.client:
 	gunzip -c $(FASTQ) | head -n 8 | java  -cp tmp  com.github.lindenb.jbwa.ws.client.BWAServiceClient | xmllint --format - 
 	rm -rf tmp
 
-test.cmdline.simple :${native.dir}/libbwajni.so ${REF}.bwt
+test.cmdline.simple :${native.dir}/libbwajni.${native.extension} ${REF}.bwt
 	echo "TEST BWA/JNI:"
 	(gunzip -c $(FASTQ) | cat ${FASTQ}) | java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example $(REF) -| tail 
 	echo "TEST BWA/NATIVE:"
 	(gunzip -c $(FASTQ) | cat ${FASTQ})| bwa-${BWA.version}/bwamem-lite ${REF} -  | tail 
 
-test.cmdline.double :${native.dir}/libbwajni.so ${REF}.bwt
+test.cmdline.double :${native.dir}/libbwajni.${native.extension} ${REF}.bwt
 	echo "TEST BWA/JNI:"
 	java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example2 $(REF)  ${FASTQ1} ${FASTQ2}
 	echo "TEST BWA/NATIVE:"
 	bwa-${BWA.version}/bwa mem $(REF) ${FASTQ1} ${FASTQ2} 2> /dev/null | grep -v -E '^@'
 
-test.gui:${native.dir}/libbwajni.so
+test.gui:${native.dir}/libbwajni.${native.extension}
 	$(JAVA)  -Djava.library.path=${native.dir}  -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.BwaFrame $(REF)
 
 
@@ -83,7 +92,7 @@ ${REF}.bwt: ${REF} bwa-${BWA.version}/libbwa.a
 	bwa-${BWA.version}/bwa index $<
 
 #create a shared dynamic library for BWA
-${native.dir}/libbwajni.so : ${native.dir}/bwajni.o ${native.dir}/libbwa2.a
+${native.dir}/libbwajni.${native.extension} : ${native.dir}/bwajni.o ${native.dir}/libbwa2.a
 	$(CC) -dynamiclib -shared -o $@ $<  -L ${native.dir} -lbwa2 -lm -lz -lpthread
 
 #compile the JNI bindings
@@ -117,6 +126,6 @@ bwa-${BWA.version}/libbwa.a :
 	unzip -o "${BWA.version}.zip" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "${BWA.version}.zip"
 
 clean:
-	rm -rf ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.so bwa-${BWA.version} "${BWA.version}.zip"
+	rm -rf ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.${native.extension} bwa-${BWA.version} "${BWA.version}.zip"
 	find ${JAVASRCDIR} -type f -name "*.class" -exec rm '{}' ';'
 	rm ${JAR}
