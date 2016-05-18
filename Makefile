@@ -84,7 +84,7 @@ ${REF}.bwt: ${REF} bwa-${BWA.version}/libbwa.a
 
 #create a shared dynamic library for BWA
 ${native.dir}/libbwajni.so : ${native.dir}/bwajni.o ${native.dir}/libbwa2.a
-	$(CC) -shared -o $@ $<  -L ${native.dir} -lbwa2 -lm -lz -lpthread
+	$(CC) -dynamiclib -shared -o $@ $<  -L ${native.dir} -lbwa2 -lm -lz -lpthread
 
 #compile the JNI bindings
 ${native.dir}/bwajni.o: ${native.dir}/bwajni.c ${native.dir}/bwajni.h bwa-${BWA.version}/libbwa.a
