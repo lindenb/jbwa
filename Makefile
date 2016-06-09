@@ -120,11 +120,18 @@ jar: ${JAVASRCDIR}
 tar: ${native.dir}
 	tar cf ${NATIVETARFILE} -C ${native.dir} .
 
+arch=$(shell uname -m)
+ifeq ($(arch),ppc64le)
+bwa-${BWA.version}/libbwa.a :
+	rm -rf "${BWA.version}.zip" "bwa-${BWA.version}"
+	wget -O "${BWA.version}.zip"  "https://github.com/lh3/bwa/archive/${BWA.version}.zip"
+	unzip -o "${BWA.version}.zip" && patch -p6 < "bwa.patch" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "${BWA.version}.zip"
+else
 bwa-${BWA.version}/libbwa.a :
 	rm -rf "${BWA.version}.zip" "bwa-${BWA.version}"
 	wget -O "${BWA.version}.zip"  "https://github.com/lh3/bwa/archive/${BWA.version}.zip"
 	unzip -o "${BWA.version}.zip" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "${BWA.version}.zip"
-
+endif
 clean:
 	rm -rf ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.${native.extension} bwa-${BWA.version} "${BWA.version}.zip"
 	find ${JAVASRCDIR} -type f -name "*.class" -exec rm '{}' ';'
