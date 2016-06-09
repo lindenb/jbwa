@@ -125,7 +125,7 @@ ifeq ($(arch),ppc64le)
 bwa-${BWA.version}/libbwa.a :
 	rm -rf "${BWA.version}.zip" "bwa-${BWA.version}"
 	wget -O "${BWA.version}.zip"  "https://github.com/lh3/bwa/archive/${BWA.version}.zip"
-	unzip -o "${BWA.version}.zip" && patch -p6 < "bwa.patch" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "${BWA.version}.zip"
+	unzip -o "${BWA.version}.zip" && patch -p6 < "bwaPPC64.patch" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "${BWA.version}.zip"
 else
 bwa-${BWA.version}/libbwa.a :
 	rm -rf "${BWA.version}.zip" "bwa-${BWA.version}"
