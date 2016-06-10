@@ -1,13 +1,14 @@
 diff -Naur /gpfs/gpfs_8mb/cheng/BWA/jbwa/bwa-8e2da1e407972170d1a660286f07a3a3a71ee6fb/ksw.c /gpfs/gpfs_8mb/cheng/BWA/jbwa/bwa-8e2da1e407972170d1a660286f07a3a3a71ee6fbPPC/ksw.c
 --- /gpfs/gpfs_8mb/cheng/BWA/jbwa/bwa-8e2da1e407972170d1a660286f07a3a3a71ee6fb/ksw.c	2016-02-01 11:52:54.000000000 -0500
 +++ /gpfs/gpfs_8mb/cheng/BWA/jbwa/bwa-8e2da1e407972170d1a660286f07a3a3a71ee6fbPPC/ksw.c	2016-06-09 13:35:57.113887000 -0400
-@@ -26,7 +26,9 @@
+@@ -26,7 +26,11 @@
  #include <stdlib.h>
  #include <stdint.h>
  #include <assert.h>
--#include <emmintrin.h>
 +#ifdef __PPC64__
 +#include "vec128int.h"
++#else
+ #include <emmintrin.h>
 +#endif
  #include "ksw.h"
  
