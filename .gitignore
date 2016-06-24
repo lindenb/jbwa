@@ -13,3 +13,4 @@ src/main/java/com/github/lindenb/jbwa/ws/server/jaxws
 *.pac
 *.sa
 bwa-*
+test/ExampleSEChangeMemOptTestOutput.txt

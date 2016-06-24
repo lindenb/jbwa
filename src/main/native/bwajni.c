@@ -290,6 +290,23 @@ JNIEXPORT jlong JNICALL QUALIFIEDMETHOD(BwaMem_mem_1opt_1init)(JNIEnv *env, jcla
 	return (jlong)mem_opt_init();
 	}
 
+/** BWAMem : update part of mem_opt scoring parameters  */
+JNIEXPORT void JNICALL QUALIFIEDMETHOD(BwaMem_update_1score_1parameters)(JNIEnv *env, jobject self, 
+                                                                         jint B, 
+                                                                         jint Oi, jint Od, 
+                                                                         jint Ei, jint Ed, 
+                                                                         jint L5, jint L3)
+  {
+  mem_opt_t* opt= _getBwaMem(env,self);
+  opt->b = (int) B;
+  opt->o_del = (int) Oi;
+  opt->o_ins = (int) Od;
+  opt->e_del = (int) Ei;
+  opt->e_ins = (int) Ed;
+  opt->pen_clip5 = (int) L5;
+  opt->pen_clip3 = (int) L3;
+  }
+
 /** BWAMem dispose the resource. A simple call to free() */
 JNIEXPORT void JNICALL QUALIFIEDMETHOD(BwaMem_dispose)(JNIEnv* env, jobject self)
 	{
