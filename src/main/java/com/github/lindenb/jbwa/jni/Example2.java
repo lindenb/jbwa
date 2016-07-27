@@ -214,14 +214,17 @@ public class Example2
 	public static void main(String args[]) throws IOException
 		{
 		System.loadLibrary("bwajni");
-		if(args.length!=3)
+		if(args.length < 3 || (args.length >= 4 && !"-v".equals(args[3])))
 			{
-			System.out.println("Usage [ref.fa] fastq1 fasta2\n");
+			System.out.println("Usage ref.fa fastq1 fasta2 [-v]\n");
 			return;
 			}
 
 		BwaIndex index=new BwaIndex(new File(args[0]));
 		BwaMem mem=new BwaMem(index);
+			if (args.length == 4) {
+				mem.set_verbosity(4);
+			}
 		KSeq kseq1=new KSeq(new File(args[1]));
 		KSeq kseq2=new KSeq(new File(args[2]));
 	

@@ -207,6 +207,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "bwamem.h"
+#include "bwa.h"
 #include "kseq.h" // for the FASTA/Q parser
 #include "bwajni.h"
 KSEQ_DECLARE(gzFile)
@@ -283,6 +284,12 @@ JNIEXPORT jlong JNICALL QUALIFIEDMETHOD(BwaIndex__1open)(JNIEnv *env, jclass c, 
 /***************************************************************************************************/
 
 CAST_REF_OBJECT(mem_opt_t*,BwaMem,"ref")
+
+JNIEXPORT void JNICALL QUALIFIEDMETHOD(BwaMem_set_1verbosity)(JNIEnv *env, jobject self, 
+                                                                         jint verbosity)
+{
+  bwa_verbose = verbosity;
+}
 
 /** BWAMem : a simple call to ::mem_opt_init  */
 JNIEXPORT jlong JNICALL QUALIFIEDMETHOD(BwaMem_mem_1opt_1init)(JNIEnv *env, jclass c)
