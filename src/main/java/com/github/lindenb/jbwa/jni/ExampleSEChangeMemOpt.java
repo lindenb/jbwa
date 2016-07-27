@@ -205,65 +205,47 @@
 
 */
 package com.github.lindenb.jbwa.jni;
-import java.io.*;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
 
-public class BwaMem	
+public class ExampleSEChangeMemOpt	
+{
+	public static void main(String args[]) throws IOException
 	{
-	protected long ref=0L;
-	private BwaIndex bwaIndex=null;
-	public BwaMem(BwaIndex bwaIndex)
+		System.loadLibrary("bwajni");
+		if(args.length==0)
 		{
-		this.ref=BwaMem.mem_opt_init();
-		this.bwaIndex=bwaIndex;
+			System.out.println("Usage [ref.fa] (stdin|fastq)\n");
+			return;
 		}
-	
-  public void updateScoringParameters(final int baseMismatchPen, 
-                                      final int gapOpenPenIns, final int gapOpenPenDel, 
-                                      final int gapExtPenIns, final int gapExtPenDel, 
-                                      final int clipPen5, final int clipPen3)
-    {
-    update_score_parameters(baseMismatchPen, gapOpenPenIns, gapOpenPenDel, gapExtPenIns, gapExtPenDel, clipPen5, clipPen3);
-    }
 
-	public AlnRgn[] align(ShortRead read) throws IOException
+		BwaIndex index=new BwaIndex(new File(args[0]));
+		BwaMem mem=new BwaMem(index);
+		KSeq kseq=new KSeq(args.length<2 || args[1].equals("-")?null:new File(args[1]));
+
+		ShortRead read=null;
+    // equivalent to setting bwa mem -x flag set to "intractg"
+		mem.updateScoringParameters(9, 16, 16, 1, 1, 5, 5);
+		while((read=kseq.next())!=null)
 		{
-		if(ref==0L) return null;
-		return align(this.bwaIndex,read.getBases());
+			for(AlnRgn a: mem.align(read))
+			{
+				if(a.getSecondary()>=0) continue;
+				System.out.println(
+					read.getName()+"\t"+
+					a.getStrand()+"\t"+
+					a.getChrom()+"\t"+
+					a.getPos()+"\t"+
+					a.getMQual()+"\t"+
+					a.getCigar()+"\t"+
+					a.getNm()
+					);
+			}
 		}
-	
-	public String[] align(final List<ShortRead> ks1,final List<ShortRead> ks2) throws IOException
-		{
-		if(ref==0L) return null;
-		if(ks1==null) throw new IllegalArgumentException("ks1 is null");
-		if(ks2==null) throw new IllegalArgumentException("ks2 is null");
-		return align(
-			ks1.toArray(new ShortRead[ks1.size()]),
-			ks2.toArray(new ShortRead[ks2.size()])
-			);
-		}
-	
-	public String[] align(final ShortRead ks1[],final ShortRead ks2[]) throws IOException
-		{
-		if(ref==0L) return null;
-		if(ks1==null) throw new IllegalArgumentException("ks1 is null");
-		if(ks2==null) throw new IllegalArgumentException("ks2 is null");
-		if(ks1.length!=ks2.length) throw new IllegalArgumentException("ks1.length!=ks2.length");
-		if(ks1.length==0) return null;
-		return align2(this.bwaIndex,ks1,ks2);
-		}
-	
-	
-	@Override
-	protected void finalize()
-		{
-		dispose();
-		}
-	
-	public native void dispose();
-	
-  private static native long mem_opt_init();
-	private native void update_score_parameters(int B, int Oi, int Od, int Ei, int Ed, int L5, int L3);
-	private native AlnRgn[] align(BwaIndex bwaIndex,byte bases[])  throws IOException;
-	private native String[] align2(BwaIndex bwaIndex,final ShortRead ks1[],final ShortRead ks2[])  throws IOException;
+
+		kseq.dispose();
+		index.close();
+		mem.dispose();
 	}
+}
+

@@ -1,0 +1,116 @@
+// Gradle script to upload a custom jbwa jar to sonatype
+//
+// before running this script the native jni libraries must be constructed and placed in the jnilib directory
+// this requires building on both osx and a linux system in order to to generate the .jnilib and .so
+//
+// Usage:
+// gradle -b publish_jbwa.gradle uploadArchives -Dversion=version -DsonatypeUser=user -DsonatypePassword=password -DisRelease=true
+//
+//
+
+plugins {
+    id 'maven'
+    id 'signing'
+    id 'java'
+}
+
+final isRelease = Boolean.getBoolean("isRelease")
+version =  isRelease ? System.getProperty("version") : System.getProperty("version") + "-SNAPSHOT"
+
+group = "com.github.lindenb"
+final sonatypeUser = System.getProperty("sonatypeUser")
+final sonatypePassword = System.getProperty("sonatypePassword")
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src/main/java'
+            exclude '**/ws/**'
+        }
+    }
+}
+
+//add jnilibs to jar
+processResources {
+    doFirst {
+        assert file("jnilib/libbwajni.jnilib").exists()
+        assert file("jnilib/libbwajni.so").exists()
+    }
+
+    from 'jnilib'
+}
+
+
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from 'build/docs/javadoc'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives jar
+    archives sourcesJar
+    archives javadocJar
+}
+/*
+* Sign non-snapshot releases with our secret key.  This should never need to be invoked directly.
+*/
+signing {
+    required { isRelease && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+uploadArchives {
+    doFirst {
+        println "Attempting to upload $jar"
+    }
+
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: sonatypeUser, password: sonatypePassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                authentication(userName: sonatypeUser, password: sonatypePassword)
+            }
+
+            pom.project {
+                name 'jbwa'
+                packaging 'jar'
+                description 'Java Bindings (JNI) for bwa'
+                url 'https://github.com/lindenb/jbwa'
+
+                scm {
+                    url 'scm:git@github.com:lindenb/jbwa.git'
+                    connection 'scm:git@github.com:lindenb/jbwa.git'
+                    developerConnection 'scm:git@github.com:lindenb/jbwa.git'
+                }
+
+                developers {
+                    developer {
+                        id = "jbwadev"
+                        name = "Pierre Lindenbaum"
+                        email = "plindenbaum@yahoo.fr"
+                    }
+                }
+
+                licenses {
+                    license {
+                        name 'Apache License Version 2.0'
+                        url 'https://github.com/lindenb/jbwa/blob/master/LICENSE.txt'
+                        distribution 'repo'
+                    }
+                }
+            }
+        }
+    }
+}
+

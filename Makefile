@@ -6,15 +6,16 @@ JAVAH ?= javah
 CFLAGS=-O3 -Wall  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE
 BWAJNIQUALPACKAGE=com.github.lindenb.jbwa.jni
 JAVASRCDIR=src/main/java
-JAVACLASSNAME= Example Example2 BwaIndex BwaMem KSeq ShortRead AlnRgn BwaFrame
+JAVACLASSNAME= Example Example2 ExampleSEChangeMemOpt BwaIndex BwaMem KSeq ShortRead AlnRgn BwaFrame
 JAVACLASSSRC=$(addprefix src/main/java/com/github/lindenb/jbwa/jni/,$(addsuffix .java,$(JAVACLASSNAME)))
 JAVAQUALNAME=$(addprefix ${BWAJNIQUALPACKAGE}.,$(JAVACLASSNAME))
 JAR=jbwa.jar
 NATIVETARFILE=jbwa-native.tar
 BWAOBJS= utils.o kstring.o ksw.o bwt.o bntseq.o bwa.o bwamem.o bwamem_pair.o kthread.o bwamem_extra.o
-REF=test/ref.fa
-FASTQ1=test/R1.fq
-FASTQ2=test/R2.fq
+TESTDIR=test
+REF=${TESTDIR}/ref.fa
+FASTQ1=${TESTDIR}/R1.fq
+FASTQ2=${TESTDIR}/R2.fq
 FASTQ=${FASTQ1}
 OSNAME=$(shell uname)
 
@@ -52,9 +53,9 @@ REF?=human_g1k_v37.fasta
 FASTQ?=file.fastq.gz
 
 CC?=gcc
-.PHONY:all compile jar tar test.cmdline.simple test.cmdline.double test.gui test.ws test .ws.client test.ws.server clean
+.PHONY:all compile jar tar test.cmdline.simple test.cmdline.double test.cmdline.simpleOpt test.gui test.ws test .ws.client test.ws.server clean
 
-all:test.cmdline.double jar tar
+all: test.cmdline.double test.cmdline.simpleOpt jar tar
 
 test.ws: test.ws.server
 
@@ -77,6 +78,10 @@ test.cmdline.simple :${native.dir}/libbwajni.${native.extension} ${REF}.bwt
 	(gunzip -c $(FASTQ) | cat ${FASTQ}) | java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example $(REF) -| tail 
 	echo "TEST BWA/NATIVE:"
 	(gunzip -c $(FASTQ) | cat ${FASTQ})| bwa-${BWA.version}/bwamem-lite ${REF} -  | tail 
+
+test.cmdline.simpleOpt :${native.dir}/libbwajni.${native.extension} ${REF}.bwt
+	echo "TEST BWA/JNI modify mem_opt:"
+	(gunzip -c $(FASTQ) | cat ${FASTQ}) | java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.ExampleSEChangeMemOpt $(REF) - > ${TESTDIR}/ExampleSEChangeMemOptTestOutput.txt
 
 test.cmdline.double :${native.dir}/libbwajni.${native.extension} ${REF}.bwt
 	echo "TEST BWA/JNI:"
@@ -120,11 +125,18 @@ jar: ${JAVASRCDIR}
 tar: ${native.dir}
 	tar cf ${NATIVETARFILE} -C ${native.dir} .
 
+arch=$(shell uname -m)
+ifeq ($(arch),ppc64le)
+bwa-${BWA.version}/libbwa.a :
+	rm -rf "${BWA.version}.zip" "bwa-${BWA.version}"
+	wget -O "${BWA.version}.zip"  "https://github.com/lh3/bwa/archive/${BWA.version}.zip"
+	unzip -o "${BWA.version}.zip" && patch -p6 < "bwaPPC64.patch" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "${BWA.version}.zip"
+else
 bwa-${BWA.version}/libbwa.a :
 	rm -rf "${BWA.version}.zip" "bwa-${BWA.version}"
 	wget -O "${BWA.version}.zip"  "https://github.com/lh3/bwa/archive/${BWA.version}.zip"
 	unzip -o "${BWA.version}.zip" && (cd "bwa-${BWA.version}" && ${MAKE} ) && rm -f "${BWA.version}.zip"
-
+endif
 clean:
 	rm -rf ${native.dir}/*.a ${native.dir}/*.o ${native.dir}/*.${native.extension} bwa-${BWA.version} "${BWA.version}.zip"
 	find ${JAVASRCDIR} -type f -name "*.class" -exec rm '{}' ';'
