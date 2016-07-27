@@ -263,6 +263,18 @@ public class BwaMem
 	public native void dispose();
 	
   private static native long mem_opt_init();
+
+	/**
+	 * Verbosity (from http://bio-bwa.sourceforge.net/bwa.shtml#3)
+	 * A value 0 for disabling all the output to stderr;
+	 * 1 for outputting errors only;
+	 * 2 for warnings and errors;
+	 * 3 for all normal messages;
+	 * 4 or higher for debugging. When this option takes value 4, the output is not SAM.
+	 *
+	 * If this method is not called, the default level is 3.
+	*/
+	public native void set_verbosity(int verbosity);
 	private native void update_score_parameters(int B, int Oi, int Od, int Ei, int Ed, int L5, int L3);
 	private native AlnRgn[] align(BwaIndex bwaIndex,byte bases[])  throws IOException;
 	private native String[] align2(BwaIndex bwaIndex,final ShortRead ks1[],final ShortRead ks2[])  throws IOException;
