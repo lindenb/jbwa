@@ -55,7 +55,7 @@ FASTQ?=file.fastq.gz
 CC?=gcc
 .PHONY:all compile jar tar test.cmdline.simple test.cmdline.double test.cmdline.simpleOpt test.gui test.ws test .ws.client test.ws.server clean
 
-all: test.cmdline.double test.cmdline.simpleOpt jar tar
+all: jar tar test.cmdline.simple test.cmdline.double test.cmdline.simpleOpt
 
 test.ws: test.ws.server
 
@@ -75,9 +75,9 @@ test.ws.client:
 
 test.cmdline.simple :${native.dir}/libbwajni.${native.extension} ${REF}.bwt
 	echo "TEST BWA/JNI:"
-	(gunzip -c $(FASTQ) | cat ${FASTQ}) | java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example $(REF) -| tail 
+	java  -Djava.library.path=${native.dir} -cp ${JAVASRCDIR} ${BWAJNIQUALPACKAGE}.Example $(REF) $(FASTQ) | tail 
 	echo "TEST BWA/NATIVE:"
-	(gunzip -c $(FASTQ) | cat ${FASTQ})| bwa-${BWA.version}/bwamem-lite ${REF} -  | tail 
+	bwa-${BWA.version}/bwamem-lite ${REF} $FASTQ | tail 
 
 test.cmdline.simpleOpt :${native.dir}/libbwajni.${native.extension} ${REF}.bwt
 	echo "TEST BWA/JNI modify mem_opt:"
