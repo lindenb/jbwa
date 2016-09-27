@@ -371,7 +371,7 @@ JNIEXPORT jobjectArray JNICALL QUALIFIEDMETHOD(BwaMem_align)(JNIEnv *env, jobjec
 		
 		VERIFY_NOT_NULL(alnRgn = (*env)->NewObject(env, alnClass, constructor, 
 			 (*env)->NewStringUTF(env, idx->bns->anns[a.rid].name),
-			 (jlong)a.pos,
+			 (jlong)(a.pos+1),
 			 (jbyte)"+-"[a.is_rev],
 			 (*env)->NewStringUTF(env, cigarStr),
 			 (jint)a.mapq,
