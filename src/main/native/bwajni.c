@@ -376,7 +376,7 @@ JNIEXPORT jobjectArray JNICALL QUALIFIEDMETHOD(BwaMem_align)(JNIEnv *env, jobjec
 			 (*env)->NewStringUTF(env, cigarStr),
 			 (jint)a.mapq,
 			 a.NM,
-			 ar.a[i].score,
+			 ar.a[i].truesc,
 			 ar.a[i].secondary
 			 ));
 
