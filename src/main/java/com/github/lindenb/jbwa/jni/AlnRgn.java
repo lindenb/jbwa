@@ -215,8 +215,9 @@ public class AlnRgn
 	private String cigar;
 	private int mqual;
 	private int NM;
+	private int AS;
 	private int secondary;
-	public AlnRgn(String chrom,long pos,byte strand,String cigar,int mqual,int NM,int secondary)
+	public AlnRgn(String chrom,long pos,byte strand,String cigar,int mqual,int NM,int AS, int secondary)
 		{
 		this.chrom=chrom;
 		this.pos=pos;
@@ -224,6 +225,7 @@ public class AlnRgn
 		this.cigar=cigar;
 		this.mqual=mqual;
 		this.NM=NM;
+		this.AS=AS;
 		this.secondary=secondary;
 		}
 	
@@ -233,11 +235,12 @@ public class AlnRgn
 	public String getCigar() { return this.cigar;}	
 	public int getMQual() { return this.mqual;}	
 	public int getNm() { return this.NM;}	
+	public int getAs() { return this.AS;}
 	public int getSecondary() { return this.secondary;}
 	
 	@Override
 	public String toString()
 		{
-		return ""+chrom+":"+String.valueOf(pos)+"("+(char)this.strand+");"+cigar+";"+mqual+";"+NM+";"+getSecondary();
+		return ""+chrom+":"+String.valueOf(pos)+"("+(char)this.strand+");"+cigar+";"+mqual+";"+NM+";"+AS+";"+getSecondary();
 		}
 	}
