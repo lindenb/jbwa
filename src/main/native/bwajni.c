@@ -339,7 +339,7 @@ JNIEXPORT jobjectArray JNICALL QUALIFIEDMETHOD(BwaMem_align)(JNIEnv *env, jobjec
   	
   	
   	VERIFY_NOT_NULL(alnClass = (*env)->FindClass(env, PACKAGEPATH "AlnRgn"));
-	VERIFY_NOT_NULL(constructor = (*env)->GetMethodID(env,alnClass,"<init>", "(Ljava/lang/String;JBLjava/lang/String;III)V"));
+	VERIFY_NOT_NULL(constructor = (*env)->GetMethodID(env,alnClass,"<init>", "(Ljava/lang/String;JBLjava/lang/String;IIII)V"));
   	VERIFY_NOT_NULL(returnedArray = (*env)->NewObjectArray(env,ar.n, alnClass, 0));
 	
 	// get all the hits
@@ -376,6 +376,7 @@ JNIEXPORT jobjectArray JNICALL QUALIFIEDMETHOD(BwaMem_align)(JNIEnv *env, jobjec
 			 (*env)->NewStringUTF(env, cigarStr),
 			 (jint)a.mapq,
 			 a.NM,
+			 ar.a[i].truesc,
 			 ar.a[i].secondary
 			 ));
 

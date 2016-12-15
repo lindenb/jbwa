@@ -236,6 +236,7 @@ public class Example
 					a.getPos()+"\t"+
 					a.getMQual()+"\t"+
 					a.getCigar()+"\t"+
+					a.getAs() +"\t"+
 					a.getNm()
 					);
 				}
